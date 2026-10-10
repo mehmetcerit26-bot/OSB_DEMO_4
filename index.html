@@ -563,6 +563,12 @@
   @keyframes shakeAnim{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
 
   #appRoot{display:none;}
+
+  /* RAPOR MODU (?rapor=KOD): PIN atlanir, sadece izleme - kontroller gizli */
+  body.rapor-modu #vanaSection,
+  body.rapor-modu #ntfyTestPanel,
+  body.rapor-modu #izleyiciRozet{ display:none !important; }
+  body.rapor-modu .flow-card{ pointer-events:none; }
 </style>
 </head>
 <body>
@@ -849,7 +855,7 @@
   </div>
 
   <!-- FULL WIDTH: Bildirim testi (ntfy) -->
-  <div class="panel" style="margin-top:20px;">
+  <div class="panel" style="margin-top:20px;" id="ntfyTestPanel">
     <div class="panel-label">Bildirim Testi (ntfy)</div>
     <div class="meta" style="margin-bottom:14px;">
       <div>SUNUCU: <b>zil.afoio.com</b></div>
@@ -882,6 +888,15 @@ function kilitAc() {
   document.getElementById("lockScreen").style.display = "none";
   document.getElementById("appRoot").style.display = "block";
 }
+/* RAPOR MODU: ESP32'nin Telegram ekran goruntusu icin kullandigi gizli link.
+   Normal link (kodsuz) -> PIN ekrani AYNEN devam eder. */
+const RAPOR_KODU = "osbR7391";
+const RAPOR_MODU = (new URLSearchParams(location.search).get("rapor") || "").startsWith(RAPOR_KODU);   // ESP32 sonuna _zaman ekler
+if (RAPOR_MODU) {
+  document.body.classList.add("rapor-modu");
+  kilitAc();
+}
+
 function yanlisKod() {
   lockErrEl.classList.add("show");
   lockCardEl.classList.add("shake");
@@ -918,6 +933,7 @@ const IZLEYICI_NABIZ_MS = 10000;
 const IZLEYICI_STALE_MS = 25000;
 
 function izleyiciNabizGonder(){
+  if (RAPOR_MODU) return;   // ekran goruntusu servisi izleyici sayilmasin
   const url = `https://${FIREBASE_HOST}/${PATH}/izleyiciler/${IZLEYICI_ID}.json?auth=${FIREBASE_AUTH}`;
   fetch(url, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({".sv":"timestamp"}) }).catch(()=>{});
 }
